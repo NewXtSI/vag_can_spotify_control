@@ -1,0 +1,3 @@
+[submodule "lib/spotify-api-arduino"]
+	path = lib/spotify-api-arduino
+	url = https://github.com/witnessmenow/spotify-api-arduino.git
