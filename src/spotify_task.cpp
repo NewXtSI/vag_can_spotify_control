@@ -120,6 +120,7 @@ void spotify_task(void *param) {
             }
             requestDueTime = millis() + delayBetweenRequests;
         }
+        delay(1);
     }
     vTaskDelete(NULL);
 }
