@@ -19,4 +19,13 @@
 #  pragma error "Define your spotify refreshtoken in user_config.h"
 #endif
 
+
+
+// Notifications
+//
+#define EVENT_JOYSTICK_UP               _BV(0)
+#define EVENT_JOYSTICK_DOWN             _BV(1)
+#define EVENT_JOYSTICK_LEFT             _BV(2)
+#define EVENT_JOYSTICK_RIGHT            _BV(3)
+
 #endif // __CONFIG_H__
