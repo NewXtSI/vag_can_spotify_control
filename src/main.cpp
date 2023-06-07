@@ -16,6 +16,7 @@ void setup() {
 
     notification_event = xEventGroupCreate();
 
+#if 0
     WiFi.mode(WIFI_STA);
     WiFi.begin(WIFI_SSID, WIFI_PSK);
     Serial.println("");
@@ -31,6 +32,7 @@ void setup() {
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
     xTaskCreatePinnedToCore(spotify_task, "spotify_task", 1024 * 7, NULL, 1, nullptr, 0);
+#endif    
     xTaskCreatePinnedToCore(ui_task, "ui_task", 1024 * 14, NULL, 1, nullptr, 1);
     xTaskCreatePinnedToCore(can_task, "can_task", 1024 * 10, NULL, 1, nullptr, 1);
     xTaskCreatePinnedToCore(controller_task, "controller_task", 1024 * 5, NULL, 1, nullptr, 1);

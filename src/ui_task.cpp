@@ -30,7 +30,7 @@ void display_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
 
 #define LINE_COUNT 3
 
-static LGFX lcd; // declare display variable
+static LGFX lcd;    // declare display variable
 
 static std::vector<int> points[LINE_COUNT];
 static int colors[] = { TFT_RED, TFT_GREEN, TFT_BLUE, TFT_CYAN, TFT_MAGENTA, TFT_YELLOW };
@@ -65,7 +65,7 @@ void ui_task(void *param) {
     static lv_indev_drv_t indev_drv;
     lv_indev_drv_init(&indev_drv);
     indev_drv.type = LV_INDEV_TYPE_ENCODER;
-    indev_drv.read_cb = lv_encoder_read;  
+    indev_drv.read_cb = lv_encoder_read;
     indev_drv.user_data = notification_event;
     lv_encoder_indev = lv_indev_drv_register(&indev_drv);
 
@@ -82,16 +82,16 @@ void ui_task(void *param) {
     lv_group_t *g;
     g = lv_group_create();
     lv_obj_t *btn = lv_btn_create(mainscreen);
-    lv_obj_set_pos(btn, 100, 10);
+    lv_obj_set_pos(btn, screenWidth - 60, 10);
     lv_obj_set_size(btn, 50, 30);
     lv_obj_add_flag(btn, LV_OBJ_FLAG_CHECKABLE);
     lv_group_add_obj(g, btn);
     btn = lv_btn_create(mainscreen);
-    lv_obj_set_pos(btn, 100, 45);
+    lv_obj_set_pos(btn, screenWidth - 60, 45);
     lv_obj_set_size(btn, 50, 30);
     lv_obj_add_flag(btn, LV_OBJ_FLAG_CHECKABLE);
     lv_group_add_obj(g, btn);
-    
+
     lv_indev_set_group(lv_encoder_indev, g);
     lv_scr_load(mainscreen);
       lcd.setBrightness(255);
