@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include <ESP32CAN.h>
 #include <CAN_config.h>
+#include "FS.h"
+#include <LITTLEFS.h>
 
 CAN_device_t CAN_cfg;             // CAN Config
 unsigned long previousMillis = 0; // will store last time a CAN Message was send
@@ -11,6 +13,24 @@ QueueHandle_t globalCanQueue = nullptr;
 
 void can_task(void *param)
 {
+    // versuchen, ein vorhandenes Dateisystem einzubinden
+    if (!LittleFS.begin(false)) {
+        Serial.println("LITTLEFS Mount fehlgeschlagen");
+        Serial.println("Kein Dateisystemsystem gefunden; wird formatiert");
+        // falls es nicht klappt, erneut mit Neu-Formatierung versuchen
+        if (!LittleFS.begin(true)) {
+            Serial.println("LITTLEFS Mount fehlgeschlagen");
+            Serial.println("Formatierung nicht möglich");
+        } else {
+            Serial.println("Formatierung des Dateisystems erfolgt");
+        }
+    }
+ 
+    Serial.println("Informationen zum Dateisystem:");
+    Serial.printf("- Bytes total:   %ld\n", LittleFS.totalBytes());
+    Serial.printf("- Bytes genutzt: %ld\n\n", LittleFS.usedBytes());
+ 
+
     CAN_cfg.speed = CAN_SPEED_100KBPS;
     CAN_cfg.tx_pin_id = GPIO_NUM_12;
     CAN_cfg.rx_pin_id = GPIO_NUM_13;
