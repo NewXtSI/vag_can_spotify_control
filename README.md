@@ -1,5 +1,7 @@
 # vag_can_spotify_control
 
+[Project blog](BLOG.md)
+
 # Problem....
 My Skoda Superb (2008) has Bluetooth Streaming to the cars multimedia system. But no chance to skip, pause, metadata display or something like this.
 
