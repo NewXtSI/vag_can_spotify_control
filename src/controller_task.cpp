@@ -5,7 +5,7 @@
 
 extern EventGroupHandle_t notification_event;
 
-EventJoystick ej1(32,33);
+EventJoystick ej1(JOYSTICK_PIN_ANALOG_X, JOYSTICK_PIN_ANALOG_Y);
 
 void onEj1XChanged(EventAnalog& ej) {
   if (ej.position() > 10)

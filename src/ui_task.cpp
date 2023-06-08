@@ -36,14 +36,23 @@ static std::vector<int> points[LINE_COUNT];
 static int colors[] = { TFT_RED, TFT_GREEN, TFT_BLUE, TFT_CYAN, TFT_MAGENTA, TFT_YELLOW };
 static int xoffset, yoffset, point_count;
 
-#include <ESP32CAN.h>
-
 int getBaseColor(int x, int y)
 {
   return ((x^y)&3 || ((x-xoffset)&31 && y&31) ? TFT_BLACK : ((!y || x == xoffset) ? TFT_WHITE : TFT_DARKGREEN));
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
+lv_obj_t *lbl;
+void can_get_status(uint32_t &uiStandardFrames_, uint32_t &uiExtendedFrames_);
+
+void lv_status_timer(lv_timer_t *timer) {
+    char text[64];
+    uint32_t uiFramesStandard;
+    uint32_t uiFramesExtended;
+    can_get_status(uiFramesStandard, uiFramesExtended);
+    sprintf(text, "Frames: %d (%d extended)", uiFramesExtended+uiFramesStandard, uiFramesExtended);
+    lv_label_set_text(lbl, text);
+}
 
 void ui_task(void *param) {
 
@@ -73,7 +82,7 @@ void ui_task(void *param) {
     lv_obj_t *mainscreen = lv_obj_create(nullptr);
     lv_obj_set_style_bg_color(mainscreen, lv_color_hex(0x303030),0);
 
-    lv_obj_t *lbl = lv_label_create(mainscreen);
+    lbl = lv_label_create(mainscreen);
     lv_obj_set_pos(lbl, 10, 10);
     lv_obj_set_style_text_font(lbl, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(lbl, lv_color_hex(0xffffff),0);
@@ -86,6 +95,19 @@ void ui_task(void *param) {
     lv_obj_set_size(btn, 50, 30);
     lv_obj_add_flag(btn, LV_OBJ_FLAG_CHECKABLE);
     lv_group_add_obj(g, btn);
+    lv_obj_add_event_cb(
+      btn,
+      [](lv_event_t *event) {
+        if (lv_obj_get_state(event->target) & LV_STATE_CHECKED) {
+            xEventGroupSetBits(notification_event, EVENT_LOG_TO_LITTLEFS);
+        } else {
+            xEventGroupClearBits(notification_event, EVENT_LOG_TO_LITTLEFS);
+        }
+      },
+      LV_EVENT_VALUE_CHANGED, NULL);
+
+
+
     btn = lv_btn_create(mainscreen);
     lv_obj_set_pos(btn, screenWidth - 60, 45);
     lv_obj_set_size(btn, 50, 30);
@@ -94,8 +116,9 @@ void ui_task(void *param) {
 
     lv_indev_set_group(lv_encoder_indev, g);
     lv_scr_load(mainscreen);
-      lcd.setBrightness(255);
 
+    lv_timer_t *timer = lv_timer_create(lv_status_timer, 500, NULL);
+    lcd.setBrightness(255);
     while (1) {
         lv_timer_handler(); /* let the GUI do its work */
         if (globalCanQueue != nullptr) {
