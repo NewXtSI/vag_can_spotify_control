@@ -34,7 +34,9 @@ void controller_task(void *param) {
     ej1.y.setChangedHandler(onEj1YChanged);
 //    ej1.setNumIncrements(255);
     while (1) {
-        ej1.update();    
+        ej1.update();
+        const portTickType xDelay = 10 / portTICK_RATE_MS;
+        vTaskDelay(xDelay);
     }
     vTaskDelete(NULL);
 }

@@ -69,9 +69,9 @@ void setup() {
 #endif
 
 //    xTaskCreatePinnedToCore(spotify_task, "spotify_task", 1024 * 7, NULL, 1, nullptr, 0);
-    xTaskCreatePinnedToCore(ui_task, "ui_task", 1024 * 14, NULL, 1, nullptr, 1);
-    xTaskCreatePinnedToCore(can_task, "can_task", 1024 * 10, NULL, 1, nullptr, 1);
-    xTaskCreatePinnedToCore(controller_task, "controller_task", 1024 * 5, NULL, 1, nullptr, 1);
+    xTaskCreatePinnedToCore(ui_task, "ui_task", 1024 * 14, NULL, 3, nullptr, 1);
+    xTaskCreatePinnedToCore(can_task, "can_task", 1024 * 10, NULL, 1, nullptr, 0);
+    xTaskCreatePinnedToCore(controller_task, "controller_task", 1024 * 5, NULL, 2, nullptr, 1);
 }
 
 void loop() {

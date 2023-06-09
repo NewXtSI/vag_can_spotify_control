@@ -34,4 +34,6 @@
 
 #define EVENT_LOG_TO_LITTLEFS           _BV(10)
 
+#define EVENT_RESET_CAN                 _BV(11)
+
 #endif // __CONFIG_H__

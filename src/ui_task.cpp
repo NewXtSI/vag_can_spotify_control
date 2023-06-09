@@ -1,5 +1,7 @@
 #include <Arduino.h>
 
+#include <ACAN_ESP32.h>
+
 #if !defined LGFX_AUTODETECT
   #define LGFX_AUTODETECT
 #endif
@@ -35,6 +37,7 @@ static LGFX lcd;    // declare display variable
 static std::vector<int> points[LINE_COUNT];
 static int colors[] = { TFT_RED, TFT_GREEN, TFT_BLUE, TFT_CYAN, TFT_MAGENTA, TFT_YELLOW };
 static int xoffset, yoffset, point_count;
+lv_obj_t *logbtn;
 
 int getBaseColor(int x, int y)
 {
@@ -43,15 +46,29 @@ int getBaseColor(int x, int y)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 lv_obj_t *lbl;
-void can_get_status(uint32_t &uiStandardFrames_, uint32_t &uiExtendedFrames_);
+lv_obj_t *lbl2;
+void can_get_status(uint32_t &uiStandardFrames_, uint32_t &uiExtendedFrames_, uint32_t &error);
 
 void lv_status_timer(lv_timer_t *timer) {
     char text[64];
     uint32_t uiFramesStandard;
     uint32_t uiFramesExtended;
-    can_get_status(uiFramesStandard, uiFramesExtended);
-    sprintf(text, "Frames: %d (%d extended)", uiFramesExtended+uiFramesStandard, uiFramesExtended);
+    uint32_t uiError;
+    can_get_status(uiFramesStandard, uiFramesExtended, uiError);
+    sprintf(text, "Rcvd: %d/%d (Init: %02X)", uiFramesExtended+uiFramesStandard, uiFramesExtended, uiError);
     lv_label_set_text(lbl, text);
+    EventBits_t bit = xEventGroupGetBits(notification_event);
+    if (bit & EVENT_LOG_TO_LITTLEFS) {
+        if ((lv_obj_get_state(logbtn) & LV_STATE_CHECKED) != LV_STATE_CHECKED) {
+            lv_obj_add_state(logbtn, LV_STATE_CHECKED);
+        }
+    } else {
+        if (lv_obj_get_state(logbtn) & LV_STATE_CHECKED) {
+            lv_obj_clear_state(logbtn, LV_STATE_CHECKED);
+        }
+    }
+    sprintf(text, "0x%02X", TWAI_STATUS_REG);
+    lv_label_set_text(lbl2, text);
 }
 
 void ui_task(void *param) {
@@ -83,20 +100,26 @@ void ui_task(void *param) {
     lv_obj_set_style_bg_color(mainscreen, lv_color_hex(0x303030),0);
 
     lbl = lv_label_create(mainscreen);
-    lv_obj_set_pos(lbl, 10, 10);
+    lv_obj_set_pos(lbl, 10, 100);
     lv_obj_set_style_text_font(lbl, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(lbl, lv_color_hex(0xffffff),0);
     lv_label_set_text(lbl, "Test");
 
+    lbl2 = lv_label_create(mainscreen);
+    lv_obj_set_pos(lbl2, 10, 10);
+    lv_obj_set_style_text_font(lbl2, &lv_font_montserrat_24, 0);
+    lv_obj_set_style_text_color(lbl2, lv_color_hex(0xffffff),0);
+    lv_label_set_text(lbl2, "Status");
+
     lv_group_t *g;
     g = lv_group_create();
-    lv_obj_t *btn = lv_btn_create(mainscreen);
-    lv_obj_set_pos(btn, screenWidth - 60, 10);
-    lv_obj_set_size(btn, 50, 30);
-    lv_obj_add_flag(btn, LV_OBJ_FLAG_CHECKABLE);
-    lv_group_add_obj(g, btn);
+    logbtn = lv_btn_create(mainscreen);
+    lv_obj_set_pos(logbtn, screenWidth - 60, 10);
+    lv_obj_set_size(logbtn, 50, 30);
+    lv_obj_add_flag(logbtn, LV_OBJ_FLAG_CHECKABLE);
+    lv_group_add_obj(g, logbtn);
     lv_obj_add_event_cb(
-      btn,
+      logbtn,
       [](lv_event_t *event) {
         if (lv_obj_get_state(event->target) & LV_STATE_CHECKED) {
             xEventGroupSetBits(notification_event, EVENT_LOG_TO_LITTLEFS);
@@ -108,11 +131,16 @@ void ui_task(void *param) {
 
 
 
-    btn = lv_btn_create(mainscreen);
+    lv_obj_t *btn = lv_btn_create(mainscreen);
     lv_obj_set_pos(btn, screenWidth - 60, 45);
     lv_obj_set_size(btn, 50, 30);
-    lv_obj_add_flag(btn, LV_OBJ_FLAG_CHECKABLE);
     lv_group_add_obj(g, btn);
+    lv_obj_add_event_cb(
+      btn,
+      [](lv_event_t *event) {
+        xEventGroupSetBits(notification_event, EVENT_RESET_CAN);
+      },
+      LV_EVENT_CLICKED, NULL);
 
     lv_indev_set_group(lv_encoder_indev, g);
     lv_scr_load(mainscreen);
@@ -124,6 +152,8 @@ void ui_task(void *param) {
         if (globalCanQueue != nullptr) {
 
         }
+        const portTickType xDelay = 10 / portTICK_RATE_MS;
+        vTaskDelay(xDelay);
     }
     vTaskDelete(NULL);
 }
